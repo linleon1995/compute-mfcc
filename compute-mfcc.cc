@@ -38,14 +38,14 @@ int processFile (MFCC &mfccComputer, const char* wavPath, const char* mfcPath) {
     std::ofstream mfcFp;
     
     // Check if input is readable
-    wavFp.open(wavPath);
+    wavFp.open(wavPath, std::ios::binary);
     if (!wavFp.is_open()) {
         std::cerr << "Unable to open input file: " << wavPath << std::endl;
         return 1;
     }
     
     // Check if output is writable
-    mfcFp.open(mfcPath);
+    mfcFp.open(mfcPath, std::ios::binary);
     if (!mfcFp.is_open()) {
         std::cerr << "Unable to open output file: " << mfcPath << std::endl;
         wavFp.close();
@@ -97,6 +97,20 @@ int processList (MFCC &mfccComputer, const char* wavListPath, const char* mfcLis
     }
 }
 
+
+// find the file size
+int getFileSize(FILE* inFile)
+{
+    int fileSize = 0;
+    fseek(inFile, 0, SEEK_END);
+
+    fileSize = ftell(inFile);
+
+    fseek(inFile, 0, SEEK_SET);
+    return fileSize;
+}
+
+
 // Main
 int main(int argc, char* argv[]) {
     std::string USAGE = "compute-mfcc : MFCC Extractor\n";
@@ -118,8 +132,8 @@ int main(int argc, char* argv[]) {
     USAGE += "compute-mfcc --inputlist input.list --outputlist output.list\n";
     USAGE += "compute-mfcc --inputlist input.list --outputlist output.list --numcepstra 17 --samplingrate 44100\n";
 
-    char *wavPath = getCmdOption(argv, argv+argc, "--input");
-    char *mfcPath = getCmdOption(argv, argv+argc, "--output");
+    const char *wavPath = getCmdOption(argv, argv+argc, "--input");
+    const char *mfcPath = getCmdOption(argv, argv+argc, "--output");
     char *wavListPath = getCmdOption(argv, argv+argc, "--inputlist");
     char *mfcListPath = getCmdOption(argv, argv+argc, "--outputlist");
     char *numCepstraC = getCmdOption(argv, argv+argc, "--numcepstra");
@@ -129,6 +143,49 @@ int main(int argc, char* argv[]) {
     char *frameShiftC = getCmdOption(argv, argv+argc, "--frameshift");
     char *lowFreqC = getCmdOption(argv, argv+argc, "--lowfreq");
     char *highFreqC = getCmdOption(argv, argv+argc, "--highfreq");
+
+    wavPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\_2sec.wav";
+    mfcPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\_2sec.csv";
+    // wavPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\b.wav";
+    // mfcPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\b_new.csv";
+
+    // wavListPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\test_wav.txt";
+    // mfcListPath = "C:\\Users\\test\\Desktop\\Leon\\Datasets\\ASUS_snoring_cpp\\2_21_2s_my2\\test.txt";
+
+    // int filelength = 0;
+    // FILE* wavFile = fopen(wavPath, "rb");
+    // wavHeader hdr;
+    // int headerSize = sizeof(wavHeader);
+    // std::ifstream wavFp;
+    // wavFp.read((char *) &hdr, headerSize);
+    // size_t bytesRead = fread(&hdr, 1, headerSize, wavFile);
+    // std::cout << "Header Read " << bytesRead << " bytes." << std::endl;
+
+    // FILE *fp;
+    // if (bytesRead > 0)
+    // {
+    //     //Read the data
+    //     uint16_t bytesPerSample = hdr.bitsPerSample / 8;      //Number     of bytes per sample
+    //     uint64_t numSamples = hdr.ChunkSize / bytesPerSample; //How many samples are in the wav file?
+    //     static const uint16_t BUFFER_SIZE = 1;
+    //     int8_t* buffer = new int8_t[BUFFER_SIZE];
+    //     // fp = fopen( "file.txt" , "wb" );
+    //     // char str[] = "This is runoob.com";
+    //     // fwrite(str, 1, sizeof(str), fp);
+    //     // while ((bytesRead = fread(buffer, sizeof buffer[0], BUFFER_SIZE / (sizeof buffer[0]), wavFile)) > 0)
+    //     while ((bytesRead = fread(buffer, 1, 1, wavFile)) > 0)
+    //     {
+    //         /** DO SOMETHING WITH THE WAVE DATA HERE **/
+    //         std::cout << "Read " << bytesRead << " bytes." << std::endl;
+
+    //         // fwrite(buffer, 1, bytesRead, fp);
+    //         // fflush(fp);
+    //     }
+    //     delete [] buffer;
+    //     buffer = nullptr;
+    //     filelength = getFileSize(wavFile);
+    // }
+    // std::cout << "Data length " << filelength << " bytes." << std::endl;
 
     // Check arguments
     if ((argc<3) || (!(wavPath && mfcPath) && !(wavListPath && mfcListPath))) {

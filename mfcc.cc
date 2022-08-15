@@ -22,6 +22,8 @@
 #include<numeric>
 #include<complex>
 #include<vector>
+#include<iostream>
+#include <fstream>
 #include<map>
 #include<math.h>
 #include"wavHeader.h"
@@ -96,7 +98,8 @@ private:
     void preEmphHam(void) {
         v_d procFrame(frame.size(), hamming[0]*frame[0]);
         for (int i=1; i<frame.size(); i++)
-            procFrame[i] = hamming[i] * (frame[i] - preEmphCoef * frame[i-1]);
+            procFrame[i] = hamming[i] * frame[i];
+            // procFrame[i] = hamming[i] * (frame[i] - preEmphCoef * frame[i-1]);
         frame = procFrame;
     }
 
@@ -144,7 +147,8 @@ private:
 
         hamming.assign(winLengthSamples,0);
         for (i=0; i<winLengthSamples; i++)
-            hamming[i] = 0.54 - 0.46 * cos(2 * PI * i / (winLengthSamples-1));
+            hamming[i] = 0.5 - 0.5 * cos(2 * PI * i / (winLengthSamples-1)); // Hanning
+            // hamming[i] = 0.54 - 0.46 * cos(2 * PI * i / (winLengthSamples-1)); // Hamming
 
         v_d v1(numCepstra+1,0), v2(numFilters,0);
         for (i=0; i <= numCepstra; i++)
@@ -223,7 +227,11 @@ public:
         preEmphCoef = 0.97;                 // Pre-emphasis coefficient
         lowFreq     = lf;                   // Filterbank low frequency cutoff in Hertz
         highFreq    = hf;                   // Filterbank high frequency cutoff in Hertz
-        numFFT      = fs<=20000?512:2048;   // FFT size
+        // numFFT      = fs<=20000?512:2048;   // FFT size
+        numFFT = 2048;
+        winLength = 128; // 2048/16 (librosa default)
+        frameShift = 32; // 512/16 (librosa default)
+        numFilters = 128;
         winLengthSamples   = winLength * fs / 1e3;  // winLength in milliseconds
         frameShiftSamples  = frameShift * fs / 1e3; // frameShift in milliseconds
         
@@ -248,9 +256,10 @@ public:
         preEmphHam();
         computePowerSpec();
         applyLMFB();
-        applyDct();
+        // applyDct();
 
-        return v_d_to_string (mfcc);
+        // return v_d_to_string (mfcc);
+        return v_d_to_string (lmfbCoef);
     }
 
     // Read input file stream, extract MFCCs and write to output file stream
@@ -259,6 +268,7 @@ public:
         wavHeader hdr;
         int headerSize = sizeof(wavHeader);
         wavFp.read((char *) &hdr, headerSize);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
 
         // Check audio format
         if (hdr.AudioFormat != 1 || hdr.bitsPerSample != 16) {
@@ -285,6 +295,7 @@ public:
 
         // Read and set the initial samples        
         wavFp.read((char *) buffer, bufferLength*bufferBPS);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
         for (int i=0; i<bufferLength; i++)
             prevsamples[i] = buffer[i];        
         delete [] buffer;
@@ -295,10 +306,45 @@ public:
         
         // Read data and process each frame
         wavFp.read((char *) buffer, bufferLength*bufferBPS);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
+        // int i = 0;
         while (wavFp.gcount() == bufferLength*bufferBPS && !wavFp.eof()) {
-            mfcFp << processFrame(buffer, bufferLength);
+            // mfcFp << processFrame(buffer, bufferLength);
+            // std::cout << wavFp.gcount() << " size" << std::endl;
+            // std::cout << i << std::endl;
+            // i++;
+            std::string mfcc_str = processFrame(buffer, bufferLength);
+            mfcFp << mfcc_str;
             wavFp.read((char *) buffer, bufferLength*bufferBPS);
         }
+
+        // const char *wavPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\b.wav";
+        // int filelength = 0;
+        // FILE* wavFile = fopen(wavPath, "r");
+        // wavFp.read((char *) &hdr, headerSize);
+        // size_t bytesRead = fread(&hdr, 1, headerSize, wavFile);
+        // std::cout << "Header Read " << bytesRead << " bytes." << std::endl;
+
+        // if (bytesRead > 0)
+        // {
+        //     //Read the data
+        //     uint16_t bytesPerSample = hdr.bitsPerSample / 8;      //Number     of bytes per sample
+        //     uint64_t numSamples = hdr.ChunkSize / bytesPerSample; //How many samples are in the wav file?
+        //     // static const uint16_t BUFFER_SIZE = bufferLength;
+        //     // static const uint16_t BUFFER_SIZE = 4096;
+        //     int16_t* buffer = new int16_t[bufferLength];
+        //     while ((bytesRead = fread(buffer, sizeof buffer[0], bufferLength / (sizeof buffer[0]), wavFile)) > 0)
+        //     {
+        //         /** DO SOMETHING WITH THE WAVE DATA HERE **/
+        //         std::cout << "Read " << bytesRead << " bytes." << std::endl;
+        //         std::string mfcc_str = processFrame(buffer, bufferLength);
+        //         mfcFp << mfcc_str;
+        //         // wavFp.read((char *) buffer, bufferLength*bufferBPS);
+        //     }
+        //     delete [] buffer;
+        //     buffer = nullptr;
+        // }
+
         delete [] buffer;
         buffer = nullptr;
         return 0;
