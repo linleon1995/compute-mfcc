@@ -4,19 +4,6 @@
 //
 //  Copyright (C) 2016 D S Pavan Kumar
 //  dspavankumar [at] gmail [dot] com
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <iostream>
@@ -59,6 +46,39 @@ int processFile (MFCC &mfccComputer, const char* wavPath, const char* mfcPath) {
     wavFp.close();
     mfcFp.close();
     return 0;
+}
+
+
+// Process each file
+std::vector <double> processFileData(MFCC& mfccComputer, const char* wavPath, const char* mfcPath) {
+    // Initialise input and output streams    
+    std::ifstream wavFp;
+    std::ofstream mfcFp;
+
+    //// Check if input is readable
+    //wavFp.open(wavPath, std::ios::binary);
+    //if (!wavFp.is_open()) {
+    //    std::cerr << "Unable to open input file: " << wavPath << std::endl;
+    //    return 1;
+    //}
+
+    //// Check if output is writable
+    //mfcFp.open(mfcPath, std::ios::binary);
+    //if (!mfcFp.is_open()) {
+    //    std::cerr << "Unable to open output file: " << mfcPath << std::endl;
+    //    wavFp.close();
+    //    return 1;
+    //}
+
+    //// Extract and write features
+    //if (mfccComputer.process_and_return(wavFp, mfcFp))
+    //    std::cerr << "Error processing " << wavPath << std::endl;
+
+    std::vector<double> inputData = mfccComputer.process_and_return(wavFp, mfcFp);
+
+    wavFp.close();
+    mfcFp.close();
+    return inputData;
 }
 
 // Process lists
@@ -144,48 +164,6 @@ int main(int argc, char* argv[]) {
     char *lowFreqC = getCmdOption(argv, argv+argc, "--lowfreq");
     char *highFreqC = getCmdOption(argv, argv+argc, "--highfreq");
 
-    wavPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\_2sec.wav";
-    mfcPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\_2sec.csv";
-    // wavPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\b.wav";
-    // mfcPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\b_new.csv";
-
-    // wavListPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\compute-mfcc\\test_wav.txt";
-    // mfcListPath = "C:\\Users\\test\\Desktop\\Leon\\Datasets\\ASUS_snoring_cpp\\2_21_2s_my2\\test.txt";
-
-    // int filelength = 0;
-    // FILE* wavFile = fopen(wavPath, "rb");
-    // wavHeader hdr;
-    // int headerSize = sizeof(wavHeader);
-    // std::ifstream wavFp;
-    // wavFp.read((char *) &hdr, headerSize);
-    // size_t bytesRead = fread(&hdr, 1, headerSize, wavFile);
-    // std::cout << "Header Read " << bytesRead << " bytes." << std::endl;
-
-    // FILE *fp;
-    // if (bytesRead > 0)
-    // {
-    //     //Read the data
-    //     uint16_t bytesPerSample = hdr.bitsPerSample / 8;      //Number     of bytes per sample
-    //     uint64_t numSamples = hdr.ChunkSize / bytesPerSample; //How many samples are in the wav file?
-    //     static const uint16_t BUFFER_SIZE = 1;
-    //     int8_t* buffer = new int8_t[BUFFER_SIZE];
-    //     // fp = fopen( "file.txt" , "wb" );
-    //     // char str[] = "This is runoob.com";
-    //     // fwrite(str, 1, sizeof(str), fp);
-    //     // while ((bytesRead = fread(buffer, sizeof buffer[0], BUFFER_SIZE / (sizeof buffer[0]), wavFile)) > 0)
-    //     while ((bytesRead = fread(buffer, 1, 1, wavFile)) > 0)
-    //     {
-    //         /** DO SOMETHING WITH THE WAVE DATA HERE **/
-    //         std::cout << "Read " << bytesRead << " bytes." << std::endl;
-
-    //         // fwrite(buffer, 1, bytesRead, fp);
-    //         // fflush(fp);
-    //     }
-    //     delete [] buffer;
-    //     buffer = nullptr;
-    //     filelength = getFileSize(wavFile);
-    // }
-    // std::cout << "Data length " << filelength << " bytes." << std::endl;
 
     // Check arguments
     if ((argc<3) || (!(wavPath && mfcPath) && !(wavListPath && mfcListPath))) {
@@ -209,7 +187,7 @@ int main(int argc, char* argv[]) {
     if (wavPath && mfcPath)
         if (processFile (mfccComputer, wavPath, mfcPath))
             return 1;
-
+            
     // Process lists
     if (wavListPath && mfcListPath)
         if (processList (mfccComputer, wavListPath, mfcListPath))

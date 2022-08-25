@@ -262,6 +262,24 @@ public:
         return v_d_to_string (lmfbCoef);
     }
 
+
+     v_d processFrame_vect(int16_t* samples, size_t N) {
+        // Add samples from the previous frame that overlap with the current frame
+        // to the current samples and create the frame.
+        frame = prevsamples;
+        for (int i = 0; i < N; i++)
+            frame.push_back(samples[i]);
+        prevsamples.assign(frame.begin() + frameShiftSamples, frame.end());
+
+        preEmphHam();
+        computePowerSpec();
+        applyLMFB();
+        // applyDct();
+
+        return lmfbCoef;
+    }
+
+
     // Read input file stream, extract MFCCs and write to output file stream
     int process (std::ifstream &wavFp, std::ofstream &mfcFp) {
         // Read the wav header    
@@ -348,5 +366,72 @@ public:
         delete [] buffer;
         buffer = nullptr;
         return 0;
+    }
+
+
+    // Read input file stream, extract MFCCs and write to output file stream
+    v_d process_and_return(std::ifstream& wavFp, std::ofstream& mfcFp) {
+        // Read the wav header    
+        wavHeader hdr;
+        int headerSize = sizeof(wavHeader);
+        wavFp.read((char*)&hdr, headerSize);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
+
+        //// Check audio format
+        //if (hdr.AudioFormat != 1 || hdr.bitsPerSample != 16) {
+        //    std::cerr << "Unsupported audio format, use 16 bit PCM Wave" << std::endl;
+        //    return 1;
+        //}
+        //// Check sampling rate
+        //if (hdr.SamplesPerSec != fs) {
+        //    std::cerr << "Sampling rate mismatch: Found " << hdr.SamplesPerSec << " instead of " << fs << std::endl;
+        //    return 1;
+        //}
+
+        //// Check sampling rate
+        //if (hdr.NumOfChan != 1) {
+        //    std::cerr << hdr.NumOfChan << " channel files are unsupported. Use mono." << std::endl;
+        //    return 1;
+        //}
+
+
+        // Initialise buffer
+        uint16_t bufferLength = winLengthSamples - frameShiftSamples;
+        int16_t* buffer = new int16_t[bufferLength];
+        int bufferBPS = (sizeof buffer[0]);
+
+        // Read and set the initial samples        
+        wavFp.read((char*)buffer, bufferLength * bufferBPS);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
+        for (int i = 0; i < bufferLength; i++)
+            prevsamples[i] = buffer[i];
+        delete[] buffer;
+
+        // Recalculate buffer size
+        bufferLength = frameShiftSamples;
+        buffer = new int16_t[bufferLength];
+
+        // Read data and process each frame
+        wavFp.read((char*)buffer, bufferLength * bufferBPS);
+        // std::cout << wavFp.gcount() << " size" << std::endl;
+        // int i = 0;
+
+        v_d inputData;
+        float data = 0.0;
+        while (wavFp.gcount() == bufferLength * bufferBPS && !wavFp.eof()) {
+            // mfcFp << processFrame(buffer, bufferLength);
+            // std::cout << wavFp.gcount() << " size" << std::endl;
+            // std::cout << i << std::endl;
+            // i++;
+            v_d mfcc_str = processFrame_vect(buffer, bufferLength);
+            inputData.insert(inputData.end(), inputData.begin(), mfcc_str.end());
+            //mfcFp << mfcc_str;
+            //inputData.push_back(mfcc_str);
+            wavFp.read((char*)buffer, bufferLength * bufferBPS);
+        }
+
+        delete[] buffer;
+        buffer = nullptr;
+        return inputData;
     }
 };
