@@ -418,14 +418,13 @@ public:
 
         v_d inputData;
         float data = 0.0;
-        //std::cout << inputData.empty() << std::endl;
         while (wavFp.gcount() == bufferLength * bufferBPS && !wavFp.eof()) {
             // mfcFp << processFrame(buffer, bufferLength);
             // std::cout << wavFp.gcount() << " size" << std::endl;
             // std::cout << i << std::endl;
             // i++;
             v_d mfcc_str = processFrame_vect(buffer, bufferLength);
-            inputData.insert(inputData.end(), mfcc_str.begin(), mfcc_str.end());
+            inputData.insert(inputData.end(), inputData.begin(), mfcc_str.end());
             //mfcFp << mfcc_str;
             //inputData.push_back(mfcc_str);
             wavFp.read((char*)buffer, bufferLength * bufferBPS);
