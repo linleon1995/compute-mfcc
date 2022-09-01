@@ -363,9 +363,6 @@ int main() {
     const char* wavPath;
     const char* wavPath2;
     const char* modelPath;
-    /*const int64_t numChannels = 3;
-    const int64_t height = 59;
-    const int64_t width = 128;*/
     const int16_t numClasses = 2;
 
     wavPath = "C:/Users/test/Desktop/Leon/Projects/compute-mfcc/data/1598482996718_21_106.87_108.87_001.wav";
