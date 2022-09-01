@@ -400,13 +400,23 @@ public:
             buffer_v.assign(waveform.begin() + i, waveform.begin() + i + new_pointer_shift);
                 
             v_d mfcc_str = processFrame_vect(buffer_v.data(), bufferLength);
-            width = mfcc_str.size();
+            height = mfcc_str.size();
+            //width = mfcc_str.size();
             inputData.insert(inputData.end(), mfcc_str.begin(), mfcc_str.end());
+        }
+
+        // transpose
+        v_d inputData_t;
+        for (size_t ch = 0; ch < height; ++ch) {
+            for (size_t i = ch; i < inputData.size(); i += height) {
+                inputData_t.emplace_back(inputData[i]);
+            }
         }
 
         delete[] buffer;
         buffer = nullptr;
-        height = inputData.size() / width;
-        return inputData;
+        width = inputData.size() / height;
+        //height = inputData.size() / width;
+        return inputData_t;
     }
 };
