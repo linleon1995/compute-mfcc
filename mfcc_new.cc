@@ -42,6 +42,7 @@ class MFCC {
 public:
     int16_t height = 0; //spectrogram height
     int16_t width = 0; //spectrogram width
+    int16_t get_height() const { return height; }
 
 private:
     const double PI = 4*atan(1.0);   // Pi = 3.14...
@@ -378,31 +379,11 @@ public:
 
     // Read input file stream, extract MFCCs and write to output file stream
     v_d process_and_return(std::vector<int16_t> waveform) {
-
-        //// Initialise buffer
-        //uint16_t bufferLength = winLengthSamples - frameShiftSamples;
-        //int16_t* buffer = new int16_t[bufferLength];
-        //int bufferBPS = (sizeof buffer[0]);
-        //std::vector<int16_t> temp;
-
-        //std::vector<int16_t> buffer_v;
-        //int pointer_shift = bufferLength * bufferBPS;
-        //std::copy(buffer, buffer + pointer_shift, std::back_inserter(buffer_v));
-        ////v_d mfcc_str = processFrame_vect(buffer_v.data(), bufferLength);
-
-        //// Read and set the initial samples     
-        //for (int i = 0; i < bufferLength; i++)
-        //    prevsamples[i] = buffer[i];
-        //delete[] buffer;
-
         // Initialise buffer
         uint16_t bufferLength = winLengthSamples - frameShiftSamples;
         int16_t* buffer = new int16_t[bufferLength];
         int bufferBPS = (sizeof buffer[0]);
         int pointer_shift = bufferLength;
-        //std::vector<int16_t> prevsamples2;
-        //std::vector<int>::iterator it = waveform.begin()
-        //std::copy(waveform.begin(), waveform.end(), prevsamples.begin());
         prevsamples.assign(waveform.begin(), waveform.begin()+pointer_shift);
 
         // Recalculate buffer size
@@ -411,10 +392,6 @@ public:
         int new_pointer_shift = bufferLength;
 
         //// Read data and process each frame
-        //std::copy(waveform.begin()+bufferLength, waveform.begin()+bufferLength+bufferLength*bufferBPS, buffer);
-
-        /*std::cout << buffer[0] << std::endl;
-        std::cout << buffer[1] << std::endl;*/
         v_d inputData;
         float data = 0.0;
         for (int i = pointer_shift; i < waveform.size()-new_pointer_shift; i+=new_pointer_shift) {
@@ -426,20 +403,6 @@ public:
             width = mfcc_str.size();
             inputData.insert(inputData.end(), mfcc_str.begin(), mfcc_str.end());
         }
-
-        //while (wavFp.gcount() == bufferLength * bufferBPS && !wavFp.eof()) {
-        //    // mfcFp << processFrame(buffer, bufferLength);
-        //    std::vector<int16_t> buffer_v;
-        //    int pointer_shift = bufferLength * bufferBPS;
-        //    std::copy(buffer, buffer+pointer_shift, std::back_inserter(buffer_v));
-        //    v_d mfcc_str = processFrame_vect(buffer_v.data(), bufferLength);
-
-        //    //v_d mfcc_str = processFrame_vect(buffer, bufferLength);
-        //    width = mfcc_str.size();
-        //    inputData.insert(inputData.end(), mfcc_str.begin(), mfcc_str.end());
-        //    //mfcFp << mfcc_str;
-        //    //inputData.push_back(mfcc_str);
-        //    wavFp.read((char*)buffer, bufferLength * bufferBPS);
 
         delete[] buffer;
         buffer = nullptr;
