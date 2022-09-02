@@ -38,7 +38,7 @@ typedef std::map<int,std::map<int,c_d> > twmap;
 
 
 
-class MFCC {
+class MelSpec {
 public:
     int16_t height = 0; //spectrogram height
     int16_t width = 0; //spectrogram width
@@ -227,8 +227,8 @@ private:
     }
 
 public:
-    // MFCC class constructor
-    MFCC(int sampFreq=16000, int nCep=12, int winLength=25, int frameShift=10, int numFilt=40, double lf=50, double hf=6500) {
+    // MelSpec class constructor
+    MelSpec(int sampFreq=16000, int nCep=12, int winLength=25, int frameShift=10, int numFilt=40, double lf=50, double hf=6500) {
         fs          = sampFreq;             // Sampling frequency
         numCepstra  = nCep;                 // Number of cepstra
         numFilters  = numFilt;              // Number of Mel warped filters
@@ -251,6 +251,7 @@ public:
         initHamDct();
         compTwiddle();
     }
+
 
     // Process each frame and extract MFCC
     std::string processFrame(int16_t* samples, size_t N) {
