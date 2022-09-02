@@ -420,4 +420,35 @@ public:
         //height = inputData.size() / width;
         return inputData_t;
     }
+
+
+    v_d processBytes(char* bytearray, int byte_len) {
+        int pointer = 0;
+        std::vector<int16_t> waveform;
+
+        uint16_t bufferLength = 128;
+        int TempBS = sizeof(int16_t);
+        //char* temp = (char*)malloc(TempBS * bufferLength);
+        //memcpy(temp, bytearray, TempBS * bufferLength);
+
+        while (1) {
+            if ((pointer + (TempBS * bufferLength)) > (byte_len)) {
+                break;
+            }
+            char* temp = (char*)malloc(TempBS * bufferLength);
+            memcpy(temp, bytearray, TempBS * bufferLength);
+
+            int16_t* buffer = reinterpret_cast<int16_t*>(temp);
+            for (int i = 0; i < bufferLength; i++) {
+                waveform.push_back(buffer[i]);
+            }
+
+            bytearray += bufferLength * TempBS;
+            pointer += (bufferLength * TempBS);
+            free(temp);
+        }
+        // preprocess(waveform)
+        v_d inputData = process_and_return(waveform);
+        return inputData;
+    }
 };
