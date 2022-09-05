@@ -28,12 +28,16 @@
 #include<map>
 #include<math.h>
 #include"wavHeader.h"
+#include"melspec.h"
+
 
 typedef std::vector<double> v_d;
 typedef std::complex<double> c_d;
 typedef std::vector<v_d> m_d;
 typedef std::vector<c_d> v_c_d;
 typedef std::map<int,std::map<int,c_d> > twmap;
+
+
 
 
 class MelSpec {
@@ -226,13 +230,13 @@ private:
 
 public:
     // MelSpec class constructor
-    MelSpec(int sampFreq=16000, int nCep=12, int winLength=25, int frameShift=10, int numFilt=40, double lf=50, double hf=6500) {
+    MelSpec(int sampFreq=16000, int nCep=12, int winLength=25, int frameShift=10, int numFilt=40, double lf=50, double hf=8000) {
         fs          = sampFreq;             // Sampling frequency
         numCepstra  = nCep;                 // Number of cepstra
         numFilters  = numFilt;              // Number of Mel warped filters
         preEmphCoef = 0.97;                 // Pre-emphasis coefficient
         lowFreq     = lf;                   // Filterbank low frequency cutoff in Hertz
-        highFreq    = hf;                   // Filterbank high frequency cutoff in Hertz
+        highFreq    = fs / 2;                   // Filterbank high frequency cutoff in Hertz
         // numFFT      = fs<=20000?512:2048;   // FFT size
         numFFT = 2048;
         winLength = 128; // 2048/16 (librosa default)
@@ -286,71 +290,8 @@ public:
         return lmfbCoef;
     }
 
-
     // Read input file stream, extract MFCCs and write to output file stream
-    int process (std::ifstream &wavFp, std::ofstream& mfcFp) {
-        // Read the wav header    
-        wavHeader hdr;
-        int headerSize = sizeof(wavHeader);
-        wavFp.read((char *) &hdr, headerSize);
-        // std::cout << wavFp.gcount() << " size" << std::endl;
-
-        // Check audio format
-        if (hdr.AudioFormat != 1 || hdr.bitsPerSample != 16) {
-            std::cerr << "Unsupported audio format, use 16 bit PCM Wave" << std::endl;
-            return 1;
-        }
-        // Check sampling rate
-        if (hdr.SamplesPerSec != fs) {
-            std::cerr << "Sampling rate mismatch: Found " << hdr.SamplesPerSec << " instead of " << fs <<std::endl;
-            return 1;
-        }
-
-        // Check sampling rate
-        if (hdr.NumOfChan != 1) {
-            std::cerr << hdr.NumOfChan << " channel files are unsupported. Use mono." <<std::endl;
-            return 1;
-        }
-
-        
-        // Initialise buffer
-        uint16_t bufferLength = winLengthSamples-frameShiftSamples;
-        int16_t* buffer = new int16_t[bufferLength];
-        int bufferBPS = (sizeof buffer[0]);
-
-        // Read and set the initial samples        
-        wavFp.read((char *) buffer, bufferLength*bufferBPS);
-        // std::cout << wavFp.gcount() << " size" << std::endl;
-        for (int i=0; i<bufferLength; i++)
-            prevsamples[i] = buffer[i];        
-        delete [] buffer;
-        
-        // Recalculate buffer size
-        bufferLength = frameShiftSamples;
-        buffer = new int16_t[bufferLength];
-        
-        // Read data and process each frame
-        wavFp.read((char *) buffer, bufferLength*bufferBPS);
-        // std::cout << wavFp.gcount() << " size" << std::endl;
-        // int i = 0;
-        while (wavFp.gcount() == bufferLength*bufferBPS && !wavFp.eof()) {
-            // mfcFp << processFrame(buffer, bufferLength);
-            // std::cout << wavFp.gcount() << " size" << std::endl;
-            // std::cout << i << std::endl;
-            // i++;
-            std::string mfcc_str = processFrame(buffer, bufferLength);
-            mfcFp << mfcc_str;
-            wavFp.read((char *) buffer, bufferLength*bufferBPS);
-        }
-
-        delete [] buffer;
-        buffer = nullptr;
-        return 0;
-    }
-
-
-    // Read input file stream, extract MFCCs and write to output file stream
-    v_d process_and_return(std::vector<int16_t> waveform) {
+    v_d WavformtoMelspec(std::vector<int16_t> waveform) {
         // Initialise buffer
         uint16_t bufferLength = winLengthSamples - frameShiftSamples;
         int16_t* buffer = new int16_t[bufferLength];
@@ -419,7 +360,35 @@ public:
             free(temp);
         }
         // preprocess(waveform)
-        v_d inputData = process_and_return(waveform);
+        v_d inputData = WavformtoMelspec(waveform);
         return inputData;
     }
+
+    std::vector<float> preprocess(char* bytearray, int byte_len) {
+        // preprocessing
+        std::vector<double> inputData = processBytes(bytearray, byte_len);
+
+        std::vector<float> inputDataFloat(inputData.begin(), inputData.end());
+        std::vector<float> temp = inputDataFloat;
+        inputDataFloat.insert(inputDataFloat.end(), temp.begin(), temp.end());
+        inputDataFloat.insert(inputDataFloat.end(), temp.begin(), temp.end());
+        return inputDataFloat;
+    }
 };
+
+
+std::vector<float> preprocess(char* bytearray, int byte_len) {
+    // Inference with preprocess libarray
+    int numCepstra = 12;
+    int numFilters = 40;
+    int samplingRate = 16000;
+    int winLength = 25;
+    int frameShift = 10;
+    int lowFreq = 50;
+    int highFreq = samplingRate / 2;
+
+    // Initialise Mel-Spectrogram class instance
+    MelSpec melSpecComputer(samplingRate, numCepstra, winLength, frameShift, numFilters, lowFreq, highFreq);
+    std::vector<float> InputData = melSpecComputer.preprocess(bytearray, byte_len);
+    return InputData;
+}
