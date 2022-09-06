@@ -160,28 +160,14 @@ std::vector<float> loadModelFile::preprocess(char* bytearray, int byte_len) {
 
 int main() {
     // Get model and data reference
-    const char* wavPath = "C:/Users/test/Desktop/Leon/Projects/compute-mfcc/data/test/1620231545598_43_36.42_38.42_004.wav";
-    const char* modelPath = "C:\\Users\\test\\Desktop\\Leon\\Projects\\Snoring_Detection\\checkpoints\\run_050\\snoring.onnx";
-
-    // Build model
-    loadModelFile model(modelPath);
+    const char* wavPath = "1620231545598_43_36.42_38.42_004.wav";
 
     // Define Input
     std::cout << wavPath << std::endl;
     char* bytearray = getBytes(wavPath);
     int byte_len = 64000;
 
-    //std::vector<float> InputData = preprocess(bytearray, byte_len);
+    //Preprocessing
     std::vector<std::vector<std::vector<std::vector<float>>>> InputData_2d = preprocess_2d(bytearray, byte_len);
-    //std::vector<float> OutputScores = model.run(InputData);
-
-    //// Inference
-    //std::vector<float> OutputScores = model.run(bytearray, byte_len);
-
-    //// Inference and get input data (preprocessed)
-    //std::vector<float> InputData_p;
-    //std::vector<float> OutputScores_p;
-    //std::tie(InputData_p, OutputScores_p) = model.run_and_get_input(bytearray, byte_len);
-
     return 0;
 }
